@@ -1,0 +1,7 @@
+settings:
+  user: #every role must be in lowercase
+    max-homes: 2
+    cooldown: 300 #time in seconds
+  vip:
+    max-homes: 3
+    cooldown: 300

@@ -1,0 +1,23 @@
+name: homes
+version: '${version}'
+
+main: simo.homes.Homes
+api-version: '26.1.2'
+load: POSTWORLD
+
+commands:
+  homes:
+    description: usa homes pls
+    usage: /homes
+  home:
+    description: usa home pls
+    usage: /home <name>
+  sethome:
+    description: usa sethome pls
+    usage: /sethome <name>
+  delhome:
+    description: usa delhome pls
+    usage: /delhome <name>
+  homeadmin:
+    description: usa homeadmin pls
+    usage: /homeadmin <sethome|delhome|list|tp|reload>
