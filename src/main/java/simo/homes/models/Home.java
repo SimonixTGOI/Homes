@@ -1,8 +1,6 @@
 package simo.homes.models;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
 
 public class Home {
     private final Location location;

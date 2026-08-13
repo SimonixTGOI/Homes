@@ -10,7 +10,6 @@ import simo.homes.managers.HomeManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class HomeTab implements TabCompleter {
     private final HomeManager homeManager;

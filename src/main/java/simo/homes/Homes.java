@@ -1,7 +1,6 @@
 package simo.homes;
 
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import simo.homes.commands.*;
 import simo.homes.managers.*;
 import simo.homes.tabs.DelHomeTab;
