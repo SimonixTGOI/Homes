@@ -36,10 +36,13 @@ public class SetHomeCommand implements CommandExecutor {
         int maxHomes = homeManager.getMaxHomes(player.getUniqueId());
         int homesNumber = homeManager.getUserHomeNumber(player.getUniqueId());
 
-        if(homesNumber >= maxHomes) {
-            sender.sendMessage("You have reached the max number of homes.");
-            return true;
+        if(!player.hasPermission("homes.bypasshomeslimit")) {
+            if(homesNumber >= maxHomes) {
+                sender.sendMessage("You have reached the max number of homes.");
+                return true;
+            }
         }
+
 
         String homeName = args[0];
 
@@ -50,9 +53,19 @@ public class SetHomeCommand implements CommandExecutor {
 
         Location location = player.getLocation();
 
-        homeManager.addHome(player.getUniqueId(), homeName, new Home(location));
+        switch (homeManager.createHome(player.getUniqueId(), homeName, new Home(location))) {
+            case 0:
+                player.sendMessage("Home " + homeName + " has been created.");
+                break;
+            case 1:
+                player.sendMessage("Home " + homeName + " already exists.");
+                break;
+            case 2:
+                player.sendMessage("Homes name can only contain alphanumeric characters.");
+                break;
+        }
 
-        player.sendMessage("Home " + homeName + " has been created.");
+
 
 
         return true;

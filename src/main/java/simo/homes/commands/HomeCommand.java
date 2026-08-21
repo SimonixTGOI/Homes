@@ -43,10 +43,13 @@ public class HomeCommand implements CommandExecutor {
 
         int cooldown = cooldownManager.getRemainingCooldown(player.getUniqueId());
 
-        if(cooldown > 0) {
-            player.sendMessage("You are still in cooldown. " + cooldown + "s left.");
-            return true;
+        if(!player.hasPermission("homes.bypasscooldown")) {
+            if(cooldown > 0) {
+                player.sendMessage("You are still in cooldown. " + cooldown + "s left.");
+                return true;
+            }
         }
+
 
 
         if(player.teleport(home.getLocation())) {

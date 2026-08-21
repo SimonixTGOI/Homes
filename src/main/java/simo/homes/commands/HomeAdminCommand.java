@@ -8,7 +8,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import simo.homes.managers.DataManager;
 import simo.homes.managers.HomeManager;
 import simo.homes.models.Home;
 
@@ -17,11 +16,9 @@ import java.util.UUID;
 
 public class HomeAdminCommand implements CommandExecutor {
     private final HomeManager homeManager;
-    private final DataManager dataManager;
 
-    public HomeAdminCommand(HomeManager homeManager, DataManager dataManager) {
+    public HomeAdminCommand(HomeManager homeManager) {
         this.homeManager = homeManager;
-        this.dataManager = dataManager;
     }
 
     @Override
@@ -60,7 +57,10 @@ public class HomeAdminCommand implements CommandExecutor {
                     sender.sendMessage("Home not found");
                     return true;
                 }
-                homeManager.removeHome(target.getUniqueId(), homeName);
+                if(!homeManager.removeHome(target.getUniqueId(), homeName)) {
+                    sender.sendMessage("Error while trying to remove home named " + homeName);
+                    return true;
+                }
 
                 sender.sendMessage("Home " + homeName + " has been deleted.");
             }
@@ -117,7 +117,18 @@ public class HomeAdminCommand implements CommandExecutor {
 
 
                 Location location = player.getLocation();
-                homeManager.addHome(target.getUniqueId(), homeName, new Home(location));
+
+                switch (homeManager.createHome(target.getUniqueId(), homeName, new Home(location))) {
+                    case 0:
+                        player.sendMessage("Home " + homeName + " has been created.");
+                        break;
+                    case 1:
+                        player.sendMessage("Home " + homeName + " already exists.");
+                        break;
+                    case 2:
+                        player.sendMessage("Homes name can only contain alphanumeric characters.");
+                        break;
+                }
 
                 player.sendMessage("Home " + homeName + " has been created.");
 
@@ -160,10 +171,11 @@ public class HomeAdminCommand implements CommandExecutor {
             }
 
             case "reload" -> {
-                if(!dataManager.reload()) {
-                    sender.sendMessage("Error while reloading homes, check console for more details.");
+                if(!homeManager.reload()) {
+                    sender.sendMessage("An error occurred while reloading the homes.");
                     return true;
                 }
+
                 sender.sendMessage("Homes Reloaded");
             }
 

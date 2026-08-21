@@ -38,9 +38,13 @@ public class DelHomeCommand implements CommandExecutor {
             return true;
         }
 
-        homeManager.removeHome(player.getUniqueId(), homeName);
+        if(!homeManager.removeHome(player.getUniqueId(), homeName)) {
+            player.sendMessage("Error while trying to remove home named " + homeName);
+            return true;
+        }
 
-        player.sendMessage("Home " + homeName + " has been deleted.");
+        player.sendMessage("Home " +  homeName + " has been deleted.");
+
 
         return true;
     }

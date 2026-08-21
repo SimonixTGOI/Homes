@@ -1,17 +1,18 @@
 package simo.homes;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import simo.homes.commands.*;
 import simo.homes.managers.*;
+import simo.homes.repositories.HomeRepository;
 import simo.homes.tabs.DelHomeTab;
 import simo.homes.tabs.HomeAdminTab;
 import simo.homes.tabs.HomeTab;
-import simo.homes.tasks.SaveTask;
 
 import java.util.Objects;
 
 public final class Homes extends JavaPlugin {
-    private DataManager dataManager;
+    private DatabaseManager databaseManager;
 
     @Override
     public void onEnable() {
@@ -21,18 +22,37 @@ public final class Homes extends JavaPlugin {
 
         saveDefaultConfig();
 
+
+        this.databaseManager = new DatabaseManager(this);
+        HomeRepository homeRepository = new HomeRepository(databaseManager, this);
+
         ConfigManager configManager = new ConfigManager(this);
         MessageManager messageManager = new MessageManager(this);
-        HomeManager homeManager = new HomeManager(configManager);
-        this.dataManager = new DataManager(this, homeManager);
-
+        HomeManager homeManager = new HomeManager(configManager, homeRepository);
         CooldownManager cooldownManager = new CooldownManager(configManager, messageManager);
 
-        dataManager.load();
+
+        if(!databaseManager.connect()) {
+            this.getLogger().severe("Could not connect to database!");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        if(!databaseManager.createTables()) {
+            this.getLogger().severe("Could not create tables!");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        if(!homeManager.load()) {
+            this.getLogger().severe("Could not load homes!");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
 
 
 
-        Objects.requireNonNull(getCommand("homeadmin")).setExecutor(new HomeAdminCommand(homeManager, dataManager));
+        Objects.requireNonNull(getCommand("homeadmin")).setExecutor(new HomeAdminCommand(homeManager));
         Objects.requireNonNull(getCommand("home")).setExecutor(new HomeCommand(homeManager, cooldownManager));
         Objects.requireNonNull(getCommand("homes")).setExecutor(new HomesCommand(homeManager));
         Objects.requireNonNull(getCommand("sethome")).setExecutor(new SetHomeCommand(homeManager));
@@ -43,8 +63,7 @@ public final class Homes extends JavaPlugin {
         Objects.requireNonNull(getCommand("home")).setTabCompleter(new HomeTab(homeManager));
         Objects.requireNonNull(getCommand("delhome")).setTabCompleter(new DelHomeTab(homeManager));
 
-        new SaveTask(homeManager, dataManager, this).
-                runTaskTimer(this, 200L, 200L);
+
 
         getLogger().info("Enabled");
 
@@ -53,7 +72,11 @@ public final class Homes extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        dataManager.save();
+
+        databaseManager.disconnect();
+
+
+
 
         getLogger().info("Disabled");
     }

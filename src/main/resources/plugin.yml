@@ -21,3 +21,31 @@ commands:
   homeadmin:
     description: usa homeadmin pls
     usage: /homeadmin <sethome|delhome|list|tp|reload>
+
+permissions:
+  homes.tp:
+    description: Grants the use of /home
+    default: true
+  homes.sethome:
+    description: Grants the use of /sethome
+    default: true
+  homes.delhome:
+    description: Grants the use of /delhome
+    default: true
+  homes.homes:
+    description: Grants the use of /homes
+    default: true
+  homes.bypasscooldown:
+    description: Allows bypassing /home cooldown
+    default: op
+  homes.bypasshomeslimit:
+    description: Allows bypassing the homes limit
+    default: op
+
+  homes.admin:
+    description: Grants the use of /homeadmin
+    default: op
+    children:
+      homes.bypasscooldown: true
+      homes.bypasshomeslimit: true
+

@@ -1,16 +1,21 @@
 package simo.homes.managers;
 
 import simo.homes.models.Home;
+import simo.homes.records.HomeLoadResult;
+import simo.homes.repositories.HomeRepository;
 
 import java.util.*;
 
 public class HomeManager {
     private final ConfigManager configManager;
+    private final HomeRepository homeRepository;
     private final Map<UUID, Map<String, Home>> map = new HashMap<>();
-    private boolean dirty = false;
 
-    public HomeManager(ConfigManager configManager) {
+
+
+    public HomeManager(ConfigManager configManager, HomeRepository homeRepository) {
         this.configManager = configManager;
+        this.homeRepository = homeRepository;
     }
 
     public List<String> getUserHomeList(UUID uuid) {
@@ -34,18 +39,44 @@ public class HomeManager {
         return homeList.get(name);
     }
 
-    public void addHome(UUID uuid, String name, Home home) {
-        this.map.computeIfAbsent(uuid, k -> new HashMap<>()).put(name, home);
-        dirty = true;
+    public int createHome(UUID uuid, String name, Home home) {
+        if(!name.matches("[a-zA-Z0-9]+")) {
+            return 2;
+        }
+        if(homeRepository.insertHome(uuid, name, home)) {
+            addHome(uuid, name, home);
+            return 0;
+        } else {
+            return 1;
+        }
+
     }
 
-    public void removeHome(UUID uuid, String name) {
+    public void addHome(UUID uuid, String name, Home home) {
+        this.map.computeIfAbsent(uuid, k -> new HashMap<>()).put(name, home);
+    }
+
+    public boolean removeHome(UUID uuid, String name) {
         Map<String, Home> homeList = this.map.get(uuid);
         if(homeList == null) {
-            return;
+            return false;
         }
+        if(!homeList.containsKey(name)) {
+            return false;
+        }
+
+        if(!homeRepository.removeHome(uuid, name)) {
+            return false;
+        }
+
+
+
         homeList.remove(name);
-        dirty = true;
+        if(homeList.isEmpty()) {
+            map.remove(uuid);
+        }
+
+        return true;
     }
 
     public Map<UUID, Map<String, Home>> getMap() {
@@ -66,12 +97,25 @@ public class HomeManager {
         return configManager.getMaxHomes(role);
     }
 
-    public void setDirty(boolean value) {
-        dirty = value;
+    public boolean load() {
+        HomeLoadResult result = homeRepository.loadHomes();
+        if(!result.success()) {
+            return false;
+        }
+        map.putAll(result.homes());
+        return true;
     }
 
-    public boolean isDirty() {
-        return dirty;
+    public boolean reload() {
+        HomeLoadResult result = homeRepository.loadHomes();
+        if(!result.success()) {
+            return false;
+        }
+        map.clear();
+        map.putAll(result.homes());
+        return true;
     }
+
+
 
 }
