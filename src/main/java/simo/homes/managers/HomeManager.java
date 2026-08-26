@@ -1,5 +1,6 @@
 package simo.homes.managers;
 
+import simo.homes.enums.HomeCreationResult;
 import simo.homes.models.Home;
 import simo.homes.records.HomeLoadResult;
 import simo.homes.repositories.HomeRepository;
@@ -39,15 +40,20 @@ public class HomeManager {
         return homeList.get(name);
     }
 
-    public int createHome(UUID uuid, String name, Home home) {
+    public HomeCreationResult createHome(UUID uuid, String name, Home home) {
         if(!name.matches("[a-zA-Z0-9]+")) {
-            return 2;
+            return HomeCreationResult.INVALID_HOME_NAME;
         }
+
+        if(getHome(uuid, name) != null) {
+            return HomeCreationResult.HOME_ALREADY_EXISTS;
+        }
+
         if(homeRepository.insertHome(uuid, name, home)) {
             addHome(uuid, name, home);
-            return 0;
+            return HomeCreationResult.SUCCESS;
         } else {
-            return 1;
+            return HomeCreationResult.DATABASE_ERROR;
         }
 
     }
@@ -77,14 +83,6 @@ public class HomeManager {
         }
 
         return true;
-    }
-
-    public Map<UUID, Map<String, Home>> getMap() {
-        return map;
-    }
-
-    public void clearMap() {
-        this.map.clear();
     }
 
     public int getMaxHomes(UUID uuid) {

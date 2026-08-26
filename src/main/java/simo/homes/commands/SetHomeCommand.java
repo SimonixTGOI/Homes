@@ -46,22 +46,20 @@ public class SetHomeCommand implements CommandExecutor {
 
         String homeName = args[0];
 
-        if(homeManager.getHome(player.getUniqueId(), homeName) != null) {
-            sender.sendMessage("You already have a home called: " + homeName);
-            return true;
-        }
-
         Location location = player.getLocation();
 
         switch (homeManager.createHome(player.getUniqueId(), homeName, new Home(location))) {
-            case 0:
+            case SUCCESS:
                 player.sendMessage("Home " + homeName + " has been created.");
                 break;
-            case 1:
+            case HOME_ALREADY_EXISTS:
                 player.sendMessage("Home " + homeName + " already exists.");
                 break;
-            case 2:
+            case INVALID_HOME_NAME:
                 player.sendMessage("Homes name can only contain alphanumeric characters.");
+                break;
+            case DATABASE_ERROR:
+                player.sendMessage("Error while trying to create home named " + homeName);
                 break;
         }
 

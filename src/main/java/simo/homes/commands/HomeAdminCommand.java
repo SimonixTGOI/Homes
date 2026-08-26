@@ -108,29 +108,26 @@ public class HomeAdminCommand implements CommandExecutor {
                     sender.sendMessage("Usage: /homeadmin sethome <player> <home name>");
                     return true;
                 }
+
+
                 String homeName = args[2];
-
-                if(homeManager.getHome(target.getUniqueId(), homeName) != null) {
-                    sender.sendMessage("Home already exists.");
-                    return true;
-                }
-
 
                 Location location = player.getLocation();
 
                 switch (homeManager.createHome(target.getUniqueId(), homeName, new Home(location))) {
-                    case 0:
+                    case SUCCESS:
                         player.sendMessage("Home " + homeName + " has been created.");
                         break;
-                    case 1:
+                    case HOME_ALREADY_EXISTS:
                         player.sendMessage("Home " + homeName + " already exists.");
                         break;
-                    case 2:
+                    case INVALID_HOME_NAME:
                         player.sendMessage("Homes name can only contain alphanumeric characters.");
                         break;
+                    case DATABASE_ERROR:
+                        player.sendMessage("Error while trying to create home named " + homeName);
+                        break;
                 }
-
-                player.sendMessage("Home " + homeName + " has been created.");
 
             }
             case "tp" -> {

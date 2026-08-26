@@ -31,7 +31,7 @@ public class HomeAdminTab implements TabCompleter {
                 }
         } else if(args.length == 2) { //user
             String scrittoPlayer = args[1].toLowerCase();
-            if(List.of("sethome", "delhome", "list", "tp").contains(args[0])) {
+            if(List.of("sethome", "delhome", "list", "tp").contains(args[0].toLowerCase())) {
                 for(Player player : Bukkit.getOnlinePlayers()) {
                     if(player.getName().toLowerCase().startsWith(scrittoPlayer)) {
                         suggestions.add(player.getName());
@@ -39,8 +39,8 @@ public class HomeAdminTab implements TabCompleter {
                 }
             }
         } else if(args.length == 3) { //homename
-            if(List.of("delhome", "tp").contains(args[0])) {
-                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
+            if(List.of("delhome", "tp").contains(args[0].toLowerCase())) {
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1].toLowerCase());
                 String scrittoHome = args[2].toLowerCase();
                 for(String homeName : homeManager.getUserHomeList(offlinePlayer.getUniqueId())) {
                     if(homeName.toLowerCase().startsWith(scrittoHome)) {
