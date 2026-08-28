@@ -4,14 +4,18 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.sql.*;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 public class DatabaseManager {
     private final Plugin plugin;
     private Connection connection;
+    private final ExecutorService executor;
 
     public DatabaseManager(Plugin plugin) {
         this.plugin = plugin;
+        this.executor = Executors.newSingleThreadExecutor();
     }
 
     public boolean connect() {
@@ -38,6 +42,37 @@ public class DatabaseManager {
 
 
     public void disconnect() {
+        boolean terminated = false;
+        executor.shutdown();
+
+        try {
+            terminated = executor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            plugin.getLogger().log(Level.WARNING, "[Homes] InterruptedException", e);
+            Thread.currentThread().interrupt();
+            return;
+        }
+
+        if(!terminated) {
+            plugin.getLogger().warning("[Homes] Timed out");
+            executor.shutdownNow();
+            try {
+                terminated = executor.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                plugin.getLogger().log(Level.WARNING, "[Homes] InterruptedException", e);
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            if(!terminated) {
+                plugin.getLogger().log(Level.SEVERE, "[Homes] Error while shutting down the sql thread.");
+                return;
+            }
+
+        }
+
+
+
         if(connection == null) {
             return;
         }
@@ -87,5 +122,10 @@ public class DatabaseManager {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    public <T> CompletableFuture<T> executeAsync(Supplier<T> task) {
+        return CompletableFuture.supplyAsync(task, executor);
+
     }
 }

@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 public class HomeRepository {
@@ -29,54 +30,66 @@ public class HomeRepository {
     }
 
 
-    public boolean insertHome(UUID uuid, String name, Home home) {
-        Connection connection = databaseManager.getConnection();
+    public CompletableFuture<Boolean> insertHome(UUID uuid, String name, Home home) {
 
-        try {
-            if(connection == null || connection.isClosed()) return false;
-        } catch (SQLException connectionError) {
-            plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQLException: ", connectionError);
-            return false;
-        }
+        Location location = home.getLocation();
 
-        try (PreparedStatement statement = connection.prepareStatement(
-                 """
-                     INSERT INTO homes (
-                        player_uuid,
-                        name,
-                        world,
-                        x,
-                        y,
-                        z,
-                        yaw,
-                        pitch
-                     )
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                     """)) {
+        String worldName = location.getWorld().getName();
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+        float yaw = location.getYaw();
+        float pitch = location.getPitch();
 
+        return databaseManager.executeAsync(() -> {
+            Connection connection = databaseManager.getConnection();
 
-
-
-            statement.setString(1, uuid.toString());
-            statement.setString(2, name);
-            statement.setString(3, home.getWorld());
-            statement.setDouble(4, home.getX());
-            statement.setDouble(5, home.getY());
-            statement.setDouble(6, home.getZ());
-            statement.setFloat(7, home.getYaw());
-            statement.setFloat(8, home.getPitch());
-
-
-            int modifiedRows = statement.executeUpdate();
-            if (modifiedRows != 1) {
+            try {
+                if(connection == null || connection.isClosed()) return false;
+            } catch (SQLException connectionError) {
+                plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQLException: ", connectionError);
                 return false;
             }
 
-        } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQL Exception", e);
-            return false;
-        }
-        return true;
+            try (PreparedStatement statement = connection.prepareStatement(
+                    """
+                        INSERT INTO homes (
+                           player_uuid,
+                           name,
+                           world,
+                           x,
+                           y,
+                           z,
+                           yaw,
+                           pitch
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """)) {
+
+
+
+
+                statement.setString(1, uuid.toString());
+                statement.setString(2, name);
+                statement.setString(3, worldName);
+                statement.setDouble(4, x);
+                statement.setDouble(5, y);
+                statement.setDouble(6, z);
+                statement.setFloat(7, yaw);
+                statement.setFloat(8, pitch);
+
+
+                int modifiedRows = statement.executeUpdate();
+                if (modifiedRows != 1) {
+                    return false;
+                }
+
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQL Exception", e);
+                return false;
+            }
+            return true;
+        });
     }
 
     public boolean removeHome(UUID uuid, String name) {

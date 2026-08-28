@@ -6,8 +6,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import simo.homes.enums.HomeCreationResult;
 import simo.homes.managers.HomeManager;
 import simo.homes.models.Home;
+
+import java.util.concurrent.CompletableFuture;
 
 public class SetHomeCommand implements CommandExecutor {
     private final HomeManager homeManager;
@@ -48,20 +51,26 @@ public class SetHomeCommand implements CommandExecutor {
 
         Location location = player.getLocation();
 
-        switch (homeManager.createHome(player.getUniqueId(), homeName, new Home(location))) {
-            case SUCCESS:
-                player.sendMessage("Home " + homeName + " has been created.");
-                break;
-            case HOME_ALREADY_EXISTS:
-                player.sendMessage("Home " + homeName + " already exists.");
-                break;
-            case INVALID_HOME_NAME:
-                player.sendMessage("Homes name can only contain alphanumeric characters.");
-                break;
-            case DATABASE_ERROR:
-                player.sendMessage("Error while trying to create home named " + homeName);
-                break;
-        }
+
+        homeManager.createHome(player.getUniqueId(), homeName, new Home(location))
+            .thenAccept(result -> {
+            switch (result) {
+                case SUCCESS:
+                    player.sendMessage("Home " + homeName + " has been created.");
+                    break;
+                case HOME_ALREADY_EXISTS:
+                    player.sendMessage("Home " + homeName + " already exists.");
+                    break;
+                case INVALID_HOME_NAME:
+                    player.sendMessage("Homes name can only contain alphanumeric characters.");
+                    break;
+                case DATABASE_ERROR:
+                    player.sendMessage("Error while trying to create home named " + homeName);
+                    break;
+            }
+        });
+
+
 
 
 

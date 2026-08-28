@@ -1,22 +1,27 @@
 package simo.homes.managers;
 
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import simo.homes.enums.HomeCreationResult;
 import simo.homes.models.Home;
 import simo.homes.records.HomeLoadResult;
 import simo.homes.repositories.HomeRepository;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class HomeManager {
     private final ConfigManager configManager;
     private final HomeRepository homeRepository;
+    private final Plugin plugin;
     private final Map<UUID, Map<String, Home>> map = new HashMap<>();
 
 
 
-    public HomeManager(ConfigManager configManager, HomeRepository homeRepository) {
+    public HomeManager(ConfigManager configManager, HomeRepository homeRepository, Plugin plugin) {
         this.configManager = configManager;
         this.homeRepository = homeRepository;
+        this.plugin = plugin;
     }
 
     public List<String> getUserHomeList(UUID uuid) {
@@ -40,21 +45,31 @@ public class HomeManager {
         return homeList.get(name);
     }
 
-    public HomeCreationResult createHome(UUID uuid, String name, Home home) {
+    public CompletableFuture<HomeCreationResult> createHome(UUID uuid, String name, Home home) {
         if(!name.matches("[a-zA-Z0-9]+")) {
-            return HomeCreationResult.INVALID_HOME_NAME;
+            return CompletableFuture.completedFuture(HomeCreationResult.INVALID_HOME_NAME);
         }
 
         if(getHome(uuid, name) != null) {
-            return HomeCreationResult.HOME_ALREADY_EXISTS;
+            return CompletableFuture.completedFuture(HomeCreationResult.HOME_ALREADY_EXISTS);
         }
 
-        if(homeRepository.insertHome(uuid, name, home)) {
-            addHome(uuid, name, home);
-            return HomeCreationResult.SUCCESS;
-        } else {
-            return HomeCreationResult.DATABASE_ERROR;
-        }
+        CompletableFuture<HomeCreationResult> resultFuture = new CompletableFuture<>();
+        CompletableFuture<Boolean> insertFuture = homeRepository.insertHome(uuid, name, home);
+        insertFuture.thenAccept(insertResult -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if(insertResult) {
+                    addHome(uuid, name, home);
+                    resultFuture.complete(HomeCreationResult.SUCCESS);
+                } else {
+                    resultFuture.complete(HomeCreationResult.DATABASE_ERROR);
+                }
+            });
+
+        });
+
+
+        return resultFuture;
 
     }
 
