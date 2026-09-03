@@ -73,7 +73,7 @@ public class HomeManager {
     }
 
     public void addHome(UUID uuid, String name, Home home) {
-        this.map.computeIfAbsent(uuid, k -> new HashMap<>()).put(name, home);
+        this.map.computeIfAbsent(uuid, _ -> new HashMap<>()).put(name, home);
     }
 
     public boolean removeHome(UUID uuid, String name) {
