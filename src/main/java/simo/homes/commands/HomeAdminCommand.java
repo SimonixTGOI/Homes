@@ -114,7 +114,7 @@ public class HomeAdminCommand implements CommandExecutor {
 
                 Location location = player.getLocation();
 
-                homeManager.createHome(player.getUniqueId(), homeName, new Home(location))
+                homeManager.createHome(target.getUniqueId(), homeName, new Home(location))
                         .thenAccept(result -> {
 
                     switch (result) {

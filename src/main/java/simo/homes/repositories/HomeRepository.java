@@ -162,7 +162,7 @@ public class HomeRepository {
                     Location location = new Location(world, x, y, z, yaw, pitch);
                     Home home = new Home(location);
 
-                    homes.computeIfAbsent(uuid, k -> new HashMap<>()).put(homeName, home);
+                    homes.computeIfAbsent(uuid, _ -> new HashMap<>()).put(homeName, home);
                 }
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQLException: ", e);

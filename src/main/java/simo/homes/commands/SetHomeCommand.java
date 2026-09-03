@@ -6,11 +6,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import simo.homes.enums.HomeCreationResult;
 import simo.homes.managers.HomeManager;
 import simo.homes.models.Home;
-
-import java.util.concurrent.CompletableFuture;
 
 public class SetHomeCommand implements CommandExecutor {
     private final HomeManager homeManager;

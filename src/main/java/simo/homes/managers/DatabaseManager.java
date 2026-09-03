@@ -42,7 +42,7 @@ public class DatabaseManager {
 
 
     public void disconnect() {
-        boolean terminated = false;
+        boolean terminated;
         executor.shutdown();
 
         try {

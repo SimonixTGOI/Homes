@@ -56,17 +56,16 @@ public class HomeManager {
 
         CompletableFuture<HomeCreationResult> resultFuture = new CompletableFuture<>();
         CompletableFuture<Boolean> insertFuture = homeRepository.insertHome(uuid, name, home);
-        insertFuture.thenAccept(insertResult -> {
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if(insertResult) {
-                    addHome(uuid, name, home);
-                    resultFuture.complete(HomeCreationResult.SUCCESS);
-                } else {
-                    resultFuture.complete(HomeCreationResult.DATABASE_ERROR);
-                }
-            });
-
-        });
+        insertFuture.thenAccept(insertResult ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if(insertResult) {
+                        addHome(uuid, name, home);
+                        resultFuture.complete(HomeCreationResult.SUCCESS);
+                    } else {
+                        resultFuture.complete(HomeCreationResult.DATABASE_ERROR);
+                    }
+                })
+        );
 
 
         return resultFuture;
