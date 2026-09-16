@@ -5,8 +5,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import simo.homes.enums.HomeDeletionResult;
 import simo.homes.managers.HomeManager;
-import simo.homes.models.Home;
 
 public class DelHomeCommand implements CommandExecutor {
     private final HomeManager homeManager;
@@ -32,19 +32,25 @@ public class DelHomeCommand implements CommandExecutor {
 
         String homeName = args[0];
 
-        Home home = homeManager.getHome(player.getUniqueId(), homeName);
-        if(home == null) {
-            player.sendMessage("You don't have a home named " + homeName);
-            return true;
-        }
 
-        if(!homeManager.removeHome(player.getUniqueId(), homeName)) {
-            player.sendMessage("Error while trying to remove home named " + homeName);
-            return true;
-        }
+        homeManager.removeHome(player.getUniqueId(), homeName)
+                .thenAccept(result -> {
 
-        player.sendMessage("Home " +  homeName + " has been deleted.");
+                    switch(result) {
+                        case HomeDeletionResult.SUCCESS ->
+                                player.sendMessage("Home " +  homeName + " has been deleted.");
 
+                        case HOME_DOES_NOT_EXIST ->
+                                player.sendMessage("You don't have a home named " + homeName);
+
+                        case DATABASE_ERROR ->
+                                player.sendMessage("Error while trying to remove the home named " + homeName);
+
+                        case IN_EXECUTION ->
+                                player.sendMessage("Error while trying to remove the home named " + homeName + " try again later.");
+                    }
+
+                });
 
         return true;
     }

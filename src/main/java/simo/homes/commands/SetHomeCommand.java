@@ -52,18 +52,21 @@ public class SetHomeCommand implements CommandExecutor {
         homeManager.createHome(player.getUniqueId(), homeName, new Home(location))
             .thenAccept(result -> {
             switch (result) {
-                case SUCCESS:
-                    player.sendMessage("Home " + homeName + " has been created.");
-                    break;
-                case HOME_ALREADY_EXISTS:
-                    player.sendMessage("Home " + homeName + " already exists.");
-                    break;
-                case INVALID_HOME_NAME:
-                    player.sendMessage("Homes name can only contain alphanumeric characters.");
-                    break;
-                case DATABASE_ERROR:
-                    player.sendMessage("Error while trying to create home named " + homeName);
-                    break;
+                case SUCCESS ->
+                        player.sendMessage("Home " + homeName + " has been created.");
+
+                case HOME_ALREADY_EXISTS ->
+                        player.sendMessage("Home " + homeName + " already exists.");
+
+                case INVALID_HOME_NAME ->
+                        player.sendMessage("Homes name can only contain alphanumeric characters.");
+
+                case DATABASE_ERROR ->
+                        player.sendMessage("Error while trying to create an home named " + homeName);
+
+                case IN_EXECUTION ->
+                        player.sendMessage("Error while trying to create the home named " + homeName + " try again later.");
+
             }
         });
 

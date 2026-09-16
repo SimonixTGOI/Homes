@@ -92,35 +92,38 @@ public class HomeRepository {
         });
     }
 
-    public boolean removeHome(UUID uuid, String name) {
-        Connection connection = databaseManager.getConnection();
+    public CompletableFuture<Boolean> removeHome(UUID uuid, String name) {
 
-        try {
-            if(connection == null || connection.isClosed()) return false;
-        } catch (SQLException connectionError) {
-            plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQLException: ", connectionError);
-            return false;
-        }
+        return databaseManager.executeAsync(() -> {
+            Connection connection = databaseManager.getConnection();
 
-        try (PreparedStatement statement = connection.prepareStatement("""
+            try {
+                if(connection == null || connection.isClosed()) return false;
+            } catch (SQLException connectionError) {
+                plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQLException: ", connectionError);
+                return false;
+            }
+
+            try (PreparedStatement statement = connection.prepareStatement("""
                 DELETE FROM homes WHERE player_uuid = ? AND name = ?
                 """)) {
 
 
-            statement.setString(1, uuid.toString());
-            statement.setString(2, name);
+                statement.setString(1, uuid.toString());
+                statement.setString(2, name);
 
-            int modifiedRows = statement.executeUpdate();
-            if (modifiedRows != 1) {
+                int modifiedRows = statement.executeUpdate();
+                if (modifiedRows != 1) {
+                    return false;
+                }
+
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQL Exception", e);
                 return false;
             }
 
-        } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "[HomeRepository] SQL Exception", e);
-            return false;
-        }
-
-        return true;
+            return true;
+        });
     }
 
     public HomeLoadResult loadHomes() {

@@ -4,5 +4,6 @@ public enum HomeCreationResult {
     SUCCESS,
     INVALID_HOME_NAME,
     DATABASE_ERROR,
-    HOME_ALREADY_EXISTS
+    HOME_ALREADY_EXISTS,
+    IN_EXECUTION
 }

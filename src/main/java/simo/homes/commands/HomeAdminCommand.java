@@ -8,6 +8,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import simo.homes.enums.HomeDeletionResult;
 import simo.homes.managers.HomeManager;
 import simo.homes.models.Home;
 
@@ -53,16 +54,25 @@ public class HomeAdminCommand implements CommandExecutor {
                 String homeName = args[2];
 
 
-                if(homeManager.getHome(target.getUniqueId(), homeName) == null) {
-                    sender.sendMessage("Home not found");
-                    return true;
-                }
-                if(!homeManager.removeHome(target.getUniqueId(), homeName)) {
-                    sender.sendMessage("Error while trying to remove home named " + homeName);
-                    return true;
-                }
+                homeManager.removeHome(target.getUniqueId(), homeName)
+                        .thenAccept(result -> {
 
-                sender.sendMessage("Home " + homeName + " has been deleted.");
+                            switch(result) {
+                                case HomeDeletionResult.SUCCESS ->
+                                        sender.sendMessage("Home " +  homeName + " has been deleted.");
+
+                                case HOME_DOES_NOT_EXIST ->
+                                        sender.sendMessage(target + " does not have a home named " + homeName);
+
+                                case DATABASE_ERROR ->
+                                        sender.sendMessage("Error while trying to remove the home named " + homeName);
+
+                                case IN_EXECUTION ->
+                                        sender.sendMessage("Error while trying to remove the home named " + homeName + " try again later.");
+
+                            }
+
+                        });
             }
             case "list" -> {
                 if(args.length < 2) {
@@ -119,16 +129,16 @@ public class HomeAdminCommand implements CommandExecutor {
 
                     switch (result) {
                         case SUCCESS:
-                            player.sendMessage("Home " + homeName + " has been created.");
+                            player.sendMessage("Home " + homeName + " has been created for " +  target.getName() + ".");
                             break;
                         case HOME_ALREADY_EXISTS:
-                            player.sendMessage("Home " + homeName + " already exists.");
+                            player.sendMessage(target.getName() + " already has an home named " + homeName);
                             break;
                         case INVALID_HOME_NAME:
                             player.sendMessage("Homes name can only contain alphanumeric characters.");
                             break;
                         case DATABASE_ERROR:
-                            player.sendMessage("Error while trying to create home named " + homeName);
+                            player.sendMessage("Error while trying to create an home named " + homeName);
                             break;
                     }
 

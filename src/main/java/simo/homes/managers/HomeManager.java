@@ -3,18 +3,22 @@ package simo.homes.managers;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import simo.homes.enums.HomeCreationResult;
+import simo.homes.enums.HomeDeletionResult;
 import simo.homes.models.Home;
 import simo.homes.records.HomeLoadResult;
 import simo.homes.repositories.HomeRepository;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HomeManager {
     private final ConfigManager configManager;
     private final HomeRepository homeRepository;
     private final Plugin plugin;
     private final Map<UUID, Map<String, Home>> map = new HashMap<>();
+    private final Set<UUID> executionMap = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> removingMap = ConcurrentHashMap.newKeySet();
 
 
 
@@ -54,18 +58,23 @@ public class HomeManager {
             return CompletableFuture.completedFuture(HomeCreationResult.HOME_ALREADY_EXISTS);
         }
 
+        if(!executionMap.add(uuid)) {
+            return CompletableFuture.completedFuture(HomeCreationResult.IN_EXECUTION);
+        }
+
         CompletableFuture<HomeCreationResult> resultFuture = new CompletableFuture<>();
-        CompletableFuture<Boolean> insertFuture = homeRepository.insertHome(uuid, name, home);
-        insertFuture.thenAccept(insertResult ->
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if(insertResult) {
-                        addHome(uuid, name, home);
-                        resultFuture.complete(HomeCreationResult.SUCCESS);
-                    } else {
-                        resultFuture.complete(HomeCreationResult.DATABASE_ERROR);
-                    }
-                })
-        );
+        CompletableFuture<Boolean> dbInsertFuture = homeRepository.insertHome(uuid, name, home);
+        dbInsertFuture.thenAccept(dbInsertResult -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (dbInsertResult) {
+                    addHome(uuid, name, home);
+                    resultFuture.complete(HomeCreationResult.SUCCESS);
+                } else {
+                    resultFuture.complete(HomeCreationResult.DATABASE_ERROR);
+                }
+            });
+            executionMap.remove(uuid);
+        });
 
 
         return resultFuture;
@@ -76,27 +85,37 @@ public class HomeManager {
         this.map.computeIfAbsent(uuid, _ -> new HashMap<>()).put(name, home);
     }
 
-    public boolean removeHome(UUID uuid, String name) {
+    public CompletableFuture<HomeDeletionResult> removeHome(UUID uuid, String name) {
+
         Map<String, Home> homeList = this.map.get(uuid);
+
         if(homeList == null) {
-            return false;
+            return CompletableFuture.completedFuture(HomeDeletionResult.HOME_DOES_NOT_EXIST);
         }
         if(!homeList.containsKey(name)) {
-            return false;
+            return CompletableFuture.completedFuture(HomeDeletionResult.HOME_DOES_NOT_EXIST);
         }
 
-        if(!homeRepository.removeHome(uuid, name)) {
-            return false;
+        if(!removingMap.add(uuid)) {
+            return CompletableFuture.completedFuture(HomeDeletionResult.IN_EXECUTION);
         }
 
+        CompletableFuture<HomeDeletionResult> resultFuture = new CompletableFuture<>();
+        CompletableFuture<Boolean> dbRemoveFuture = homeRepository.removeHome(uuid, name);
+        dbRemoveFuture.thenAccept(dbRemoveResult -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (dbRemoveResult) {
+                    homeList.remove(name);
+                    resultFuture.complete(HomeDeletionResult.SUCCESS);
+                } else {
+                    resultFuture.complete(HomeDeletionResult.DATABASE_ERROR);
+                }
+            });
+            removingMap.remove(uuid);
+        });
 
+        return resultFuture;
 
-        homeList.remove(name);
-        if(homeList.isEmpty()) {
-            map.remove(uuid);
-        }
-
-        return true;
     }
 
     public int getMaxHomes(UUID uuid) {

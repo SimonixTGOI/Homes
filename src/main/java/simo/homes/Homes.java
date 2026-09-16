@@ -8,6 +8,7 @@ import simo.homes.repositories.HomeRepository;
 import simo.homes.tabs.DelHomeTab;
 import simo.homes.tabs.HomeAdminTab;
 import simo.homes.tabs.HomeTab;
+import simo.homes.tabs.SetHomeTab;
 
 import java.util.Objects;
 
@@ -59,6 +60,7 @@ public final class Homes extends JavaPlugin {
         Objects.requireNonNull(getCommand("delhome")).setExecutor(new DelHomeCommand(homeManager));
 
 
+        Objects.requireNonNull(getCommand("sethome")).setTabCompleter(new SetHomeTab());
         Objects.requireNonNull(getCommand("homeadmin")).setTabCompleter(new HomeAdminTab(homeManager));
         Objects.requireNonNull(getCommand("home")).setTabCompleter(new HomeTab(homeManager));
         Objects.requireNonNull(getCommand("delhome")).setTabCompleter(new DelHomeTab(homeManager));
