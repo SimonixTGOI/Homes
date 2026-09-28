@@ -30,7 +30,7 @@ public final class Homes extends JavaPlugin {
         ConfigManager configManager = new ConfigManager(this);
         MessageManager messageManager = new MessageManager(this);
         HomeManager homeManager = new HomeManager(configManager, homeRepository, this);
-        CooldownManager cooldownManager = new CooldownManager(configManager, messageManager);
+        CooldownManager cooldownManager = new CooldownManager(configManager, messageManager, this);
 
 
         if(!databaseManager.connect()) {

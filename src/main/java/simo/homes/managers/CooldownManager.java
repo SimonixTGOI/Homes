@@ -2,6 +2,7 @@ package simo.homes.managers;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,9 +13,17 @@ public class CooldownManager {
     private final MessageManager messageManager;
     private final Map<UUID, Long> cooldowns = new HashMap<>();
 
-    public CooldownManager(ConfigManager configManager, MessageManager messageManager) {
+    public CooldownManager(ConfigManager configManager, MessageManager messageManager, Plugin plugin) {
         this.configManager = configManager;
         this.messageManager = messageManager;
+        Bukkit.getScheduler().runTaskTimer(plugin,
+                () -> {
+                    for(Map.Entry<UUID, Long> entry : cooldowns.entrySet()) {
+                        if(entry.getValue() <= 0) {
+                            cooldowns.remove(entry.getKey());
+                        }
+                    }
+                }, 100L, 20L);
     }
 
     public int getPlayerCooldown(UUID uuid) {
@@ -48,9 +57,9 @@ public class CooldownManager {
         }
         Long now = System.currentTimeMillis();
 
-        long passedms = now-used;
-        int passedTime = (int) (passedms / 1000);
-        int result = cooldown - passedTime;
+        long elapsedMillis = now-used;
+        int elapsedSeconds = (int) (elapsedMillis / 1000);
+        int result = cooldown - elapsedSeconds;
 
         if(result < 0) {
             result = 0;

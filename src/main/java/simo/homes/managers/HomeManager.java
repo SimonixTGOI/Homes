@@ -73,7 +73,8 @@ public class HomeManager {
                     resultFuture.complete(HomeCreationResult.DATABASE_ERROR);
                 }
             });
-            executionMap.remove(uuid);
+
+            resultFuture.thenRun(() -> executionMap.remove(uuid));
         });
 
 
@@ -111,7 +112,7 @@ public class HomeManager {
                     resultFuture.complete(HomeDeletionResult.DATABASE_ERROR);
                 }
             });
-            removingMap.remove(uuid);
+            resultFuture.thenRun(()-> removingMap.remove(uuid));
         });
 
         return resultFuture;
